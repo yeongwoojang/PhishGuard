@@ -1,6 +1,7 @@
 package com.example.phishguard.di
 
 import android.content.Context
+import com.example.phishguard.core.security.BiometricAuthManager
 import com.example.phishguard.domain.repository.ThreatRepository
 import com.example.phishguard.domain.repository.ThreatRepositoryImpl
 import com.example.phishguard.ml.PhishingDetector
@@ -32,6 +33,17 @@ abstract class AppModule {
             @ApplicationContext context: Context
         ): PhishingDetector {
             return PhishingDetector(context)
+        }
+    }
+
+    @Module
+    @InstallIn(SingletonComponent::class)
+    object BiometricModule {
+
+        @Provides
+        @Singleton
+        fun provideBiometricAuthManager(): BiometricAuthManager {
+            return BiometricAuthManager()
         }
     }
 }

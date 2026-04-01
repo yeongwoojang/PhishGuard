@@ -22,20 +22,36 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
+import com.example.phishguard.core.security.BiometricAuthManager
+import com.example.phishguard.presentation.auth.BiometricScreen
 import com.example.phishguard.presentation.home.HomeScreen
 import com.example.phishguard.ui.theme.PhishGuardTheme
 import com.google.ai.client.generativeai.GenerativeModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
+    @Inject
+    lateinit var biometricAuthManager: BiometricAuthManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             PhishGuardTheme {
-                HomeScreen()
+                var isAuthenticated by remember { mutableStateOf(false) }
+
+                if (isAuthenticated) {
+                    HomeScreen()
+                } else {
+                    BiometricScreen(
+                        biometricAuthManager = biometricAuthManager,
+                        onAuthSuccess = { isAuthenticated = true }
+                    )
+                }
             }
         }
     }
