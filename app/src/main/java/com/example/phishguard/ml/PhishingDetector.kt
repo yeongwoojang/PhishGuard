@@ -14,7 +14,7 @@ class PhishingDetector @Inject constructor(
 ) {
     private var interpreter: Interpreter? = null
     private val vocabulary = mutableMapOf<String, Int>()
-    private val maxLength = 20
+    private var maxLen = 30  // 기본값
 
     init {
         loadModel()
@@ -35,8 +35,6 @@ class PhishingDetector @Inject constructor(
         }
     }
 
-    private var maxLen = 30  // 기본값
-
     private fun loadVocabulary() {
         try {
             val json = context.assets.open("vocab.json")
@@ -45,10 +43,13 @@ class PhishingDetector @Inject constructor(
 
             // word_index 추출
             val wordIndexStart = json.indexOf("\"word_index\":") + "\"word_index\":".length
+            Log.d("PhishGuard", "wordIndexStart: $wordIndexStart")
             val wordIndexEnd = json.lastIndexOf("},\"max_length\"")
                 .takeIf { it > 0 } ?: json.lastIndexOf("}")
+            Log.d("PhishGuard", "wordIndexStart: $wordIndexEnd")
 
             val wordIndexJson = json.substring(wordIndexStart, wordIndexEnd).trim()
+            Log.d("PhishGuard", "wordIndexJson: $wordIndexJson")
 
             wordIndexJson.trimStart('{').trimEnd('}')
                 .split(",")
@@ -60,7 +61,7 @@ class PhishingDetector @Inject constructor(
                         vocabulary[word] = index
                     }
                 }
-
+            Log.d("PhishGuard", "vocabulary: $vocabulary")
             // max_length 추출
             val maxLengthMatch = Regex("\"max_length\":\\s*(\\d+)").find(json)
             maxLen = maxLengthMatch?.groupValues?.get(1)?.toIntOrNull() ?: 30
@@ -73,23 +74,37 @@ class PhishingDetector @Inject constructor(
 
     fun analyze(text: String): Float {
         return try {
-            val input = textToInputArray(text)
-            val output = Array(1) { FloatArray(2) }
-            interpreter?.run(input, output)
+            val tokens = text.lowercase().split(" ")
 
-            // output[0][1] = 스팸(피싱)일 확률
-            val score = output[0][1]
-            Log.d("PhishGuard", "TFLite 판별 점수: $score")
-            score
+            // 30단어 이하면 기존 방식 그대로
+            if (tokens.size <= maxLen) {
+                val input = tokensToInputArray(tokens)
+                return runInference(input)
+            }
+
+            // 30단어 초과면 청크로 나눠서 분석
+            val chunks = tokens.chunked(maxLen)
+            Log.d("PhishGuard", "긴 문자 감지 → ${chunks.size}개 청크로 분석")
+
+            val scores = chunks.map { chunk ->
+                val input = tokensToInputArray(chunk)
+                runInference(input)
+            }
+
+            // 가장 높은 점수 반환 (어느 부분이든 피싱이면 위험)
+            val maxScore = scores.max()
+            Log.d("PhishGuard", "청크별 점수: $scores → 최종: $maxScore")
+            maxScore
+
         } catch (e: Exception) {
             Log.e("PhishGuard", "TFLite 추론 실패: ${e.message}")
             -1f
         }
     }
 
-    private fun textToInputArray(text: String): Array<FloatArray> {
-        val tokens = text.lowercase().split(" ")
-        val inputArray = FloatArray(maxLen) { 0f }  // maxLength → maxLen
+    // 토큰 배열 → 모델 입력 배열 변환
+    private fun tokensToInputArray(tokens: List<String>): Array<FloatArray> {
+        val inputArray = FloatArray(maxLen) { 0f }
 
         tokens.take(maxLen).forEachIndexed { index, token ->
             inputArray[index] = (vocabulary[token] ?: 0).toFloat()
@@ -98,7 +113,10 @@ class PhishingDetector @Inject constructor(
         return arrayOf(inputArray)
     }
 
-    fun close() {
-        interpreter?.close()
+    // 실제 모델 추론
+    private fun runInference(input: Array<FloatArray>): Float {
+        val output = Array(1) { FloatArray(2) }
+        interpreter?.run(input, output)
+        return output[0][1]
     }
 }
