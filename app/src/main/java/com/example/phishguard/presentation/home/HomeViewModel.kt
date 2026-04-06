@@ -13,15 +13,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val analyzeMessageUseCase: AnalyzeMessageUseCase,
     private val getThreatHistoryUseCase: GetThreatHistoryUseCase
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Idle)
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    private val _messageTestState = MutableStateFlow<HomeUiState>(HomeUiState.Idle)
+    val messageTestState: StateFlow<HomeUiState> = _messageTestState.asStateFlow()
 
+    //_ Room DB에 있는 메세지 문석 이력 Flow
     val threatHistory = getThreatHistoryUseCase()
         .stateIn(
             scope = viewModelScope,
@@ -29,20 +31,21 @@ class HomeViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    /**
+     * 문자 직접 입력하여 분석 테스트 메소드
+     * @param text: 테스트할 문자 내용
+     * @param sender: 테스트할 보낸 사람 명
+     */
     fun analyzeMessage(text: String, sender: String) {
         viewModelScope.launch {
-            _uiState.value = HomeUiState.Loading
+            _messageTestState.value = HomeUiState.Loading
             try {
                 val result = analyzeMessageUseCase(text, sender)
-                _uiState.value = HomeUiState.Success(result)
+                _messageTestState.value = HomeUiState.Success(result)
             } catch (e: Exception) {
-                _uiState.value = HomeUiState.Error(e.message ?: "알 수 없는 오류")
+                _messageTestState.value = HomeUiState.Error(e.message ?: "알 수 없는 오류")
             }
         }
-    }
-
-    fun resetState() {
-        _uiState.value = HomeUiState.Idle
     }
 }
 

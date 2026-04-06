@@ -74,41 +74,39 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
-    // Lifecycle + ViewModel
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.0")
     implementation("androidx.activity:activity-compose:1.11.0")
 
-    // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.5")
 
-    // Hilt
+    //_ Hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
 
-    // Room
+    //_ Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
 
-    // TFLite
+    //_ TFLite
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
     implementation("org.tensorflow:tensorflow-lite-metadata:0.4.4")
 
-    // ML Kit
+    //_ ML Kit
     implementation("com.google.mlkit:text-recognition-korean:16.0.1")
 
-    // Gemini
+    //_ Gemini
     implementation("com.google.ai.client.generativeai:generativeai:0.9.0")
 
-    // Biometric
+    //_ Biometric
     implementation("androidx.biometric:biometric:1.2.0-alpha05")
 
-    // DataStore (설정 저장)
+    //_ DataStore (설정 저장)
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
-    // Coroutines
+    //_ Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 }

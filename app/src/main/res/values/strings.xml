@@ -1,3 +1,55 @@
 <resources>
     <string name="app_name">PhishGuard</string>
+    <!-- 앱 공통 -->
+    <string name="app_subtitle">AI 기반 피싱 문자 탐지</string>
+
+    <!-- 통계 -->
+    <string name="stat_total">전체</string>
+    <string name="stat_danger">위험</string>
+    <string name="stat_safe">안전</string>
+
+    <!-- 수동 분석 -->
+    <string name="manual_analysis">수동 분석</string>
+    <string name="hint_sender">발신자 번호</string>
+    <string name="hint_message">문자 내용</string>
+    <string name="btn_analyze">피싱 분석하기</string>
+    <string name="btn_analyzing">분석 중...</string>
+
+    <!-- 분석 결과 -->
+    <string name="result_danger">위험 문자 탐지</string>
+    <string name="result_caution">의심 문자 탐지</string>
+    <string name="result_safe">안전 문자 탐지</string>
+    <string name="label_ai_analysis">AI 심층 분석</string>
+    <string name="message_detection">문자 탐지</string>
+
+    <!-- 탐지 이력 -->
+    <string name="threat_history">탐지 이력</string>
+    <string name="label_danger">위험</string>
+    <string name="label_caution">주의</string>
+    <string name="label_safe">안전</string>
+    <string name="unknown_sender">알 수 없음</string>
+    <string name="time_just_now">방금 전</string>
+
+    <!-- 알림 -->
+    <string name="notification_channel_name">PhishGuard 경고</string>
+    <string name="notification_channel_desc">피싱 문자 탐지 경고</string>
+
+    <!-- 권한 안내 -->
+    <string name="permission_title">알림 접근 권한 필요</string>
+    <string name="permission_desc">피싱 문자를 자동으로 탐지하려면\n알림 접근 권한이 필요해요.</string>
+    <string name="permission_guide_title">설정 방법</string>
+    <string name="permission_guide_content">1. 아래 버튼을 눌러 설정 화면으로 이동\n2. PhishGuard 찾기\n3. 허용 토글 켜기\n4. 앱으로 돌아오기</string>
+    <string name="btn_go_to_settings">설정으로 이동</string>
+
+    <!-- 생체 인증 -->
+    <string name="biometric_title">PhishGuard 잠금 해제</string>
+    <string name="biometric_subtitle">생체 인증으로 앱에 접근하세요</string>
+    <string name="biometric_desc">생체 인증으로 앱을 잠금 해제하세요</string>
+    <string name="btn_biometric">지문/얼굴로 잠금 해제</string>
+    <string name="btn_authenticating">인증 중...</string>
+
+    <!-- 에러 -->
+    <string name="error_prefix">오류: </string>
+    <string name="error_analysis_failed">분석 실패</string>
+    <string name="error_parse_failed">응답 파싱 실패</string>
 </resources>

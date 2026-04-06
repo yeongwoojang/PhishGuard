@@ -13,11 +13,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.phishguard.R
 import com.example.phishguard.domain.model.RiskLevel
 import com.example.phishguard.domain.model.ThreatResult
 import java.text.SimpleDateFormat
@@ -87,7 +89,7 @@ private fun getHistoryStyle(riskLevel: RiskLevel): HistoryStyle = when (riskLeve
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val messageTestState by viewModel.messageTestState.collectAsState()
     val threatHistory by viewModel.threatHistory.collectAsState()
 
     var inputText by remember { mutableStateOf("") }
@@ -111,7 +113,7 @@ fun HomeScreen(
             AnalysisInputSection(
                 inputSender = inputSender,
                 inputText = inputText,
-                isLoading = uiState is HomeUiState.Loading,
+                isLoading = messageTestState is HomeUiState.Loading,
                 onSenderChange = { inputSender = it },
                 onTextChange = { inputText = it },
                 onAnalyze = {
@@ -123,7 +125,7 @@ fun HomeScreen(
         }
 
         item {
-            when (val state = uiState) {
+            when (val state = messageTestState) {
                 is HomeUiState.Success -> AnalysisResultSection(state.result)
                 is HomeUiState.Error -> ErrorSection(state.message)
                 else -> {}
@@ -133,7 +135,7 @@ fun HomeScreen(
         if (threatHistory.isNotEmpty()) {
             item {
                 Text(
-                    text = "탐지 이력",
+                    text = stringResource(R.string.threat_history),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color(0xFF888780),
@@ -170,13 +172,13 @@ fun HeaderSection(total: Int, danger: Int, safe: Int) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Column {
                     Text(
-                        text = "PhishGuard",
+                        text = stringResource(R.string.app_name),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.White
                     )
                     Text(
-                        text = "AI 기반 피싱 문자 탐지",
+                        text = stringResource(R.string.app_subtitle),
                         fontSize = 12.sp,
                         color = Color.White.copy(alpha = 0.7f)
                     )
@@ -192,19 +194,19 @@ fun HeaderSection(total: Int, danger: Int, safe: Int) {
                 StatCard(
                     modifier = Modifier.weight(1f),
                     value = total.toString(),
-                    label = "전체",
+                    label = stringResource(R.string.stat_total),
                     valueColor = Color.White
                 )
                 StatCard(
                     modifier = Modifier.weight(1f),
                     value = danger.toString(),
-                    label = "위험",
+                    label = stringResource(R.string.label_danger),
                     valueColor = Color(0xFFFF6B6B)
                 )
                 StatCard(
                     modifier = Modifier.weight(1f),
                     value = safe.toString(),
-                    label = "안전",
+                    label = stringResource(R.string.label_safe),
                     valueColor = Color(0xFF51CF66)
                 )
             }
@@ -262,7 +264,7 @@ fun AnalysisInputSection(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "수동 분석",
+                text = stringResource(R.string.manual_analysis),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color(0xFF888780)
@@ -272,7 +274,7 @@ fun AnalysisInputSection(
             OutlinedTextField(
                 value = inputSender,
                 onValueChange = onSenderChange,
-                label = { Text("발신자 번호", fontSize = 13.sp) },
+                label = { Text(stringResource(R.string.hint_sender), fontSize = 13.sp) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(8.dp)
@@ -283,7 +285,7 @@ fun AnalysisInputSection(
             OutlinedTextField(
                 value = inputText,
                 onValueChange = onTextChange,
-                label = { Text("문자 내용", fontSize = 13.sp) },
+                label = { Text(stringResource(R.string.hint_message), fontSize = 13.sp) },
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 3,
                 shape = RoundedCornerShape(8.dp)
@@ -301,7 +303,7 @@ fun AnalysisInputSection(
                 )
             ) {
                 Text(
-                    text = if (isLoading) "분석 중..." else "피싱 분석하기",
+                    text = if (isLoading) stringResource(R.string.btn_authenticating) else stringResource(R.string.btn_analyze),
                     fontSize = 14.sp,
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
@@ -338,7 +340,7 @@ fun AnalysisResultSection(result: ThreatResult) {
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "${style.badgeText} 문자 탐지",
+                        text = "${style.badgeText} ${stringResource(R.string.message_detection)}",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = style.titleColor
@@ -377,7 +379,7 @@ fun AnalysisResultSection(result: ThreatResult) {
                         .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
                     Text(
-                        text = "AI 심층 분석",
+                        text = stringResource(R.string.label_ai_analysis),
                         fontSize = 11.sp,
                         color = style.titleColor
                     )
@@ -400,7 +402,7 @@ fun ErrorSection(message: String) {
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
         Text(
-            text = "오류: $message",
+            text = "${stringResource(R.string.error_prefix)}: $message",
             fontSize = 13.sp,
             color = DangerRedDark,
             modifier = Modifier.padding(14.dp)
@@ -485,7 +487,7 @@ fun formatTime(timestamp: Long): String {
 
 fun formatSender(sender: String): String {
     return if (sender.contains(".")) {
-        "알 수 없음"  // 패키지명이면 대체
+        "알 수 없음"  //_ 패키지명이면 알 수 없음 표시 (간혹 다른 앱에서 보내는 경우가 있음. 일단 알 수 없음 처리.)
     } else {
         sender
     }

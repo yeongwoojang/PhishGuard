@@ -10,11 +10,11 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface ThreatDao {
 
-    // 전체 이력 조회 — 최신순
+    //_ 전체 이력 조회 — 최신순
     @Query("SELECT * FROM threats ORDER BY analyzedAt DESC")
     fun getAllThreats(): Flow<List<ThreatEntity>>
 
-    // 위험/주의만 조회
+    //_ 위험/주의만 조회
     @Query("""
     SELECT COUNT(*) FROM threats 
     WHERE messageText = :text 
@@ -29,15 +29,15 @@ interface ThreatDao {
     """)
     fun getDangerousThreats(): Flow<List<ThreatEntity>>
 
-    // 저장
+    //_ 저장
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(threat: ThreatEntity)
 
-    // 전체 삭제
+    //_ 전체 삭제
     @Query("DELETE FROM threats")
     suspend fun deleteAll()
 
-    // 오래된 기록 삭제 (30일 이전)
+    //_ 오래된 기록 삭제 (30일 이전)
     @Query("DELETE FROM threats WHERE analyzedAt < :timestamp")
     suspend fun deleteOlderThan(timestamp: Long)
 }

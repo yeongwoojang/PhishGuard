@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.DisposableEffect
@@ -13,9 +14,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.example.phishguard.core.constants.SystemConstants
 import com.example.phishguard.core.security.BiometricAuthManager
 import com.example.phishguard.presentation.auth.BiometricScreen
 import com.example.phishguard.presentation.home.HomeScreen
@@ -33,9 +36,12 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            //_ API 33 이후는 직접 퍼미션 요청
             if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
+                != PackageManager.PERMISSION_GRANTED
+            ) {
                 requestPermissions(
                     arrayOf(Manifest.permission.POST_NOTIFICATIONS),
                     1001
@@ -50,10 +56,10 @@ class MainActivity : FragmentActivity() {
                     mutableStateOf(isNotificationListenerEnabled())
                 }
 
-                // 설정에서 돌아오면 권한 재확인
+                //_ 설정에서 돌아오면 권한 재확인
                 DisposableEffect(Unit) {
-                    val observer = object : DefaultLifecycleObserver {
-                        override fun onResume(owner: LifecycleOwner) {
+                    val observer = object : DefaultLifecycleObserver { //_ Activity 생명주기를 관찰
+                        override fun onResume(owner: LifecycleOwner) { //_ 설정화면 -> 앱으로 돌아오면 실행
                             hasNotificationPermission = isNotificationListenerEnabled()
                         }
                     }
@@ -65,28 +71,31 @@ class MainActivity : FragmentActivity() {
                     !hasNotificationPermission -> {
                         NotificationPermissionScreen(
                             onGoToSettings = {
-                                startActivity(
-                                    Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS")
-                                )
+                                startActivity(Intent(SystemConstants.NOTIFICATION_LISTENER_ACTION))
                             }
                         )
                     }
+
                     !isAuthenticated -> {
                         BiometricScreen(
                             biometricAuthManager = biometricAuthManager,
                             onAuthSuccess = { isAuthenticated = true }
                         )
                     }
+
                     else -> HomeScreen()
                 }
             }
         }
     }
 
+    /**
+     * 앱이 알림 접근 권한을 가지고 있는지 체크
+     */
     private fun isNotificationListenerEnabled(): Boolean {
         val flat = Settings.Secure.getString(
             contentResolver,
-            "enabled_notification_listeners"
+            SystemConstants.NOTIFICATION_LISTENER_SETTINGS
         )
         return flat?.contains(packageName) == true
     }

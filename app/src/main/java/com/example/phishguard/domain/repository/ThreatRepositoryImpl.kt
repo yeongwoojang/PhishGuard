@@ -17,35 +17,42 @@ import javax.inject.Singleton
 class ThreatRepositoryImpl @Inject constructor(
     private val geminiService: GeminiService,
     private val threatDao: ThreatDao,
-    private val phishingDetector: PhishingDetector  // 추가
+    private val phishingDetector: PhishingDetector
 ) : ThreatRepository {
 
+    private val TAG = "ThreatRepositoryImpl"
+
+    /**
+     * 메세지 분석
+     * 1차 하드코딩 데이터 포함여부 분석
+     * 2차 TFLite로 학습한 데이터로 분석 (피싱문자59개, 정상문자 43개를 50번 반복해서 쌓은 데이터) - phishing_model.tflite
+     * 3차 Gemini를 통해 분석 요청
+     */
     override suspend fun analyzeMessage(
         text: String,
         sender: String
     ): ThreatResult {
 
-        Log.d("PhishGuard", "===== 분석 시작 =====")
-        Log.d("PhishGuard", "발신자: $sender")
-        Log.d("PhishGuard", "문자내용: ${text.take(50)}")
+        Log.d(TAG, "===== 분석 시작 =====")
+        Log.d(TAG, "발신자: $sender")
+        Log.d(TAG, "문자내용: ${text.take(50)}")
 
-        val quickScore = quickAnalyze(text)
+        val quickScore = quickAnalyze(text) //_ 하드코딩한 데이터로 1차 분석
         val tfliteScore = phishingDetector.analyze(text)
 
         val finalScore = if (tfliteScore >= 0f) {
-            Log.d("PhishGuard", "TFLite: $tfliteScore / 규칙: $quickScore")
-            // TFLite 비중 낮추고 규칙 기반 비중 높임
-            (tfliteScore * 0.2f) + (quickScore * 0.8f)
+            Log.d(TAG, "TFLite: $tfliteScore / 규칙: $quickScore")
+            (tfliteScore * 0.2f) + (quickScore * 0.8f) //_ tfLite 모델 학습 데이터가 적기 때문에 우선은 하드코딩 분석 가중치를 높게 잡음.
         } else {
-            Log.d("PhishGuard", "TFLite 실패 → 규칙 기반 폴백: $quickScore")
+            Log.d(TAG, "TFLite 실패 → 규칙 기반 폴백: $quickScore")
             quickScore
         }
-        Log.d("PhishGuard", "1차 판별 점수: $finalScore")
+        Log.d(TAG, "1차 판별 점수: $finalScore")
 
         val result = if (finalScore in 0.31f..0.60f) {
-            Log.d("PhishGuard", "→ 애매한 케이스 Gemini 호출")
+            Log.d(TAG, "→ 애매한 케이스 Gemini 호출")
             val geminiResult = geminiService.analyzeMessage(text, sender)
-            Log.d("PhishGuard", "→ Gemini 결과: ${geminiResult.isPhishing} / ${geminiResult.reason}")
+            Log.d(TAG, "→ Gemini 결과: ${geminiResult.isPhishing} / ${geminiResult.reason}")
             ThreatResult(
                 messageText = text,
                 sender = sender,
@@ -56,7 +63,7 @@ class ThreatRepositoryImpl @Inject constructor(
                 isGeminiAnalyzed = true
             )
         } else {
-            Log.d("PhishGuard", "→ Gemini 호출 없음 / ${RiskLevel.from(finalScore)}")
+            Log.d(TAG, "→ Gemini 호출 없음 / ${RiskLevel.from(finalScore)}")
             ThreatResult(
                 messageText = text,
                 sender = sender,
@@ -68,17 +75,17 @@ class ThreatRepositoryImpl @Inject constructor(
             )
         }
 
-        Log.d("PhishGuard", "최종: ${result.riskLevel} (${result.riskScore})")
-        Log.d("PhishGuard", "===== 분석 완료 =====")
+        Log.d(TAG, "최종: ${result.riskLevel} (${result.riskScore})")
+        Log.d(TAG, "===== 분석 완료 =====")
 
         val oneMinuteAgo = System.currentTimeMillis() - 60_000
         val isDuplicate = threatDao.countRecentDuplicate(text, oneMinuteAgo) > 0
 
         if (!isDuplicate) {
             threatDao.insert(result.toEntity())
-            Log.d("PhishGuard", "DB 저장 완료")
+            Log.d(TAG, "DB 저장 완료")
         } else {
-            Log.d("PhishGuard", "중복 문자 → DB 저장 스킵")
+            Log.d(TAG, "중복 문자 → DB 저장 스킵")
         }
         return result
     }
@@ -93,7 +100,11 @@ class ThreatRepositoryImpl @Inject constructor(
             .map { entities -> entities.map { it.toDomain() } }
     }
 
-    // 규칙 기반 빠른 1차 판별
+    /**
+     * 하드코딩 데이터로 1차 분석
+     *
+     * @param text: 분석할 메세지
+     */
     private fun quickAnalyze(text: String): Float {
         var score = 0f
 

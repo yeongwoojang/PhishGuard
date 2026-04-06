@@ -10,10 +10,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.phishguard.R
 
 private val PrimaryBlue = Color(0xFF185FA5)
 
@@ -32,7 +34,6 @@ fun NotificationPermissionScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier.padding(32.dp)
         ) {
-            // 아이콘
             Box(
                 modifier = Modifier
                     .size(100.dp)
@@ -46,7 +47,7 @@ fun NotificationPermissionScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "알림 접근 권한 필요",
+                text = stringResource(R.string.permission_title),
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Medium,
                 color = PrimaryBlue
@@ -55,7 +56,7 @@ fun NotificationPermissionScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "피싱 문자를 자동으로 탐지하려면\n알림 접근 권한이 필요해요.",
+                text = stringResource(R.string.permission_desc),
                 fontSize = 14.sp,
                 color = Color(0xFF888780),
                 textAlign = TextAlign.Center,
@@ -75,17 +76,14 @@ fun NotificationPermissionScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
-                        text = "설정 방법",
+                        text = stringResource(R.string.permission_guide_title),
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color(0xFF444441)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "1. 아래 버튼을 눌러 설정 화면으로 이동\n" +
-                                "2. PhishGuard 찾기\n" +
-                                "3. 허용 토글 켜기\n" +
-                                "4. 앱으로 돌아오기",
+                        text = stringResource(R.string.permission_guide_content),
                         fontSize = 13.sp,
                         color = Color(0xFF888780),
                         lineHeight = 22.sp
@@ -106,7 +104,7 @@ fun NotificationPermissionScreen(
                 )
             ) {
                 Text(
-                    text = "설정으로 이동",
+                    text = stringResource(R.string.btn_go_to_settings),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium
                 )

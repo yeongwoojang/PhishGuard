@@ -7,6 +7,7 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.example.phishguard.core.constants.SystemConstants
 import com.example.phishguard.domain.model.RiskLevel
 import com.example.phishguard.domain.model.ThreatResult
 import com.example.phishguard.domain.usecase.AnalyzeMessageUseCase
@@ -22,13 +23,14 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class PhishGuardNotificationService : NotificationListenerService() {
+    private val TAG = "PhishGuardNotificationService"
 
     @Inject
     lateinit var analyzeMessageUseCase: AnalyzeMessageUseCase
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    // 최근 분석한 문자 해시 저장 (중복 방지)
+    //_ 중복 방지를 위해 최근 분석한 문자 해시 저장
     private val recentlyAnalyzed = mutableSetOf<Int>()
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -40,22 +42,22 @@ class PhishGuardNotificationService : NotificationListenerService() {
 
         if (!isMessageNotification(sbn.packageName, "", text)) return
 
-        // 중복 체크 — 같은 문자는 5초 안에 재분석 안 함
+        //_ 중복 체크 — 같은 문자는 5초 안에 재분석 하지 않도록 함.
         val messageHash = (sender + text).hashCode()
         if (recentlyAnalyzed.contains(messageHash)) {
-            Log.d("PhishGuard", "→ 중복 알림 스킵")
+            Log.d(TAG, "→ 중복 알림 스킵")
             return
         }
 
         recentlyAnalyzed.add(messageHash)
 
-        // 5초 후 해시 제거 (같은 문자 재수신 허용)
+        //_ 5초 후 해시 제거 (같은 문자 재수신 허용)
         serviceScope.launch {
             kotlinx.coroutines.delay(5000)
             recentlyAnalyzed.remove(messageHash)
         }
 
-        Log.d("PhishGuard", "→ 문자 알림 감지! 발신자: $sender")
+        Log.d(TAG, "→ 문자 알림 감지! 발신자: $sender")
 
         serviceScope.launch {
             try {
@@ -64,7 +66,7 @@ class PhishGuardNotificationService : NotificationListenerService() {
                     showWarningNotification(result)
                 }
             } catch (e: Exception) {
-                Log.e("PhishGuard", "분석 실패: ${e.message}")
+                Log.e(TAG, "분석 실패: ${e.message}")
             }
         }
     }
@@ -79,23 +81,23 @@ class PhishGuardNotificationService : NotificationListenerService() {
         title: String,
         text: String
     ): Boolean {
-        // 문자 앱 패키지명
+        //_ 문자 앱 패키지명
         val messagePackages = listOf(
-            "com.android.mms",
-            "com.samsung.android.messaging",
-            "com.google.android.apps.messaging"
+            SystemConstants.MMS_PACKAGE_NAME,
+            SystemConstants.SAMSUNG_ANDROID_MESSAGING_PACKAGE_NAME,
+            SystemConstants.GOOGLE_ANDROID_MESSAGING_PACKAGE_NAME
         )
 
-        // 카드사 알림 앱
+        //_ 카드사 알림 앱
         val financePackages = listOf(
-            "com.kakao.talk",
-            "com.nhn.android.search"
+            SystemConstants.KAKAOTALK_PACKAGE_NAME,
+            SystemConstants.NHN_ANDROID_SEARCH_PACKAGE_NAME
         )
 
         if (packageName in messagePackages) return true
         if (packageName in financePackages) return true
 
-        // 텍스트 안에 금융 키워드 있으면 처리
+        //_ 텍스트 안에 금융 관련된 키워드 있으면 처리
         val financialKeywords = listOf("승인", "결제", "이체", "입금", "출금")
         return financialKeywords.any { text.contains(it) }
     }
@@ -103,7 +105,6 @@ class PhishGuardNotificationService : NotificationListenerService() {
     private fun showWarningNotification(result: ThreatResult) {
         val channelId = "phishguard_warning"
 
-        // 알림 채널 생성 (Android 8.0+)
         val channel = NotificationChannel(
             channelId,
             "PhishGuard 경고",

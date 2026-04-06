@@ -3,12 +3,16 @@ package com.example.phishguard.data.remote
 import android.util.Log
 import com.example.phishguard.BuildConfig
 import com.google.ai.client.generativeai.GenerativeModel
-import javax.inject.Inject  // jakarta → javax 수정
+import javax.inject.Inject
 
 class GeminiService @Inject constructor() {
+    companion object Constants {
+        const val geminiModelName = "gemini-2.5-flash"
+    }
+    private val TAG = "GeminiService"
 
     private val model = GenerativeModel(
-        modelName = "gemini-2.5-flash",
+        modelName = geminiModelName,
         apiKey = BuildConfig.GEMINI_API_KEY
     )
 
@@ -19,7 +23,7 @@ class GeminiService @Inject constructor() {
         return try {
             val response = model.generateContent(buildPrompt(text, sender))
             val rawText = response.text ?: ""
-            Log.d("PhishGuard", "Gemini 원본 응답: $rawText")
+            Log.d(TAG, "Gemini 원본 응답: $rawText")
             parseResponse(rawText)
         } catch (e: Exception) {
             GeminiAnalysisResult(
@@ -46,40 +50,36 @@ class GeminiService @Inject constructor() {
 
     private fun parseResponse(raw: String): GeminiAnalysisResult {
         return try {
-            // 마크다운 제거
             val cleaned = raw
                 .replace("```json", "")
                 .replace("```", "")
                 .trim()
 
-            // is_phishing 파싱
             val isPhishing = cleaned
                 .substringAfter("\"is_phishing\":")
                 .substringBefore(",")
                 .trim()
                 .toBoolean()
 
-            // confidence 파싱
             val confidence = cleaned
                 .substringAfter("\"confidence\":")
                 .substringBefore(",")
                 .trim()
                 .toFloat()
 
-            // reason 파싱 — 공백 포함 처리
             val reason = cleaned
                 .substringAfter("\"reason\":")
                 .trim()
-                .removePrefix("\"")   // 앞 따옴표 제거
-                .substringBefore("\"") // 뒤 따옴표까지 자르기
+                .removePrefix("\"") //_ 앞 따옴표 제거
+                .substringBefore("\"") //_ 뒤 따옴표까지 자르기
                 .trim()
 
-            Log.d("PhishGuard", "파싱 결과 → isPhishing: $isPhishing, confidence: $confidence, reason: $reason")
+            Log.d(TAG, "파싱 결과 → isPhishing: $isPhishing, confidence: $confidence, reason: $reason")
 
             GeminiAnalysisResult(isPhishing, confidence, reason)
 
         } catch (e: Exception) {
-            Log.e("PhishGuard", "파싱 실패: ${e.message}, 원본: $raw")
+            Log.e(TAG, "파싱 실패: ${e.message}, 원본: $raw")
             GeminiAnalysisResult(
                 isPhishing = false,
                 confidence = 0f,

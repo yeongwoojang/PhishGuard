@@ -11,13 +11,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.fragment.app.FragmentActivity
+import com.example.phishguard.R
 import com.example.phishguard.core.security.BiometricAuthManager
 
 private val PrimaryBlue = Color(0xFF185FA5)
+
+object BiometricConstants {
+    const val CANCEL_KOREAN = "취소"
+    const val CANCEL_ENGLISH = "cancel"
+}
 
 @Composable
 fun BiometricScreen(
@@ -25,7 +33,7 @@ fun BiometricScreen(
     onAuthSuccess: () -> Unit
 ) {
     val context = LocalContext.current
-    val activity = context as androidx.fragment.app.FragmentActivity  // 직접 캐스팅
+    val activity = context as FragmentActivity
     var errorMessage by remember { mutableStateOf("") }
     var isAuthenticating by remember { mutableStateOf(false) }
 
@@ -47,14 +55,15 @@ fun BiometricScreen(
             },
             onError = { error ->
                 isAuthenticating = false
-                if (!error.contains("취소") && !error.contains("cancel", ignoreCase = true)) {
+                if (!error.contains(BiometricConstants.CANCEL_KOREAN)
+                    && !error.contains(BiometricConstants.CANCEL_ENGLISH, ignoreCase = true)
+                ) {
                     errorMessage = error
                 }
             }
         )
     }
 
-    // UI는 그대로 유지
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -88,7 +97,7 @@ fun BiometricScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "생체 인증으로 앱을 잠금 해제하세요",
+                text = stringResource(R.string.biometric_desc),
                 fontSize = 14.sp,
                 color = Color(0xFF888780),
                 textAlign = TextAlign.Center
@@ -111,7 +120,12 @@ fun BiometricScreen(
                         },
                         onError = { error ->
                             isAuthenticating = false
-                            if (!error.contains("취소") && !error.contains("cancel", ignoreCase = true)) {
+                            if (!error.contains(BiometricConstants.CANCEL_KOREAN)
+                                && !error.contains(
+                                    BiometricConstants.CANCEL_ENGLISH,
+                                    ignoreCase = true
+                                )
+                            ) {
                                 errorMessage = error
                             }
                         }
@@ -125,7 +139,8 @@ fun BiometricScreen(
                 enabled = !isAuthenticating
             ) {
                 Text(
-                    text = if (isAuthenticating) "인증 중..." else "지문/얼굴로 잠금 해제",
+                    text = if (isAuthenticating) stringResource(R.string.btn_authenticating)
+                    else stringResource(R.string.btn_biometric),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium
                 )

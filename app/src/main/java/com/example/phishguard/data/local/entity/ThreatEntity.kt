@@ -11,14 +11,14 @@ data class ThreatEntity(
     val id: Long = 0,
     val messageText: String,
     val sender: String,
-    val riskLevel: String,      // RiskLevel enum → String으로 저장
+    val riskLevel: String,
     val riskScore: Float,
     val reason: String,
     val analyzedAt: Long,
     val isGeminiAnalyzed: Boolean
 )
 
-// Entity → Domain 모델 변환
+//_ Entity → Domain 모델 변환
 fun ThreatEntity.toDomain(): ThreatResult = ThreatResult(
     messageText = messageText,
     sender = sender,
@@ -29,7 +29,7 @@ fun ThreatEntity.toDomain(): ThreatResult = ThreatResult(
     isGeminiAnalyzed = isGeminiAnalyzed
 )
 
-// Domain 모델 → Entity 변환
+//_ Domain 모델 → Entity 변환
 fun ThreatResult.toEntity(): ThreatEntity = ThreatEntity(
     messageText = messageText,
     sender = sender,
