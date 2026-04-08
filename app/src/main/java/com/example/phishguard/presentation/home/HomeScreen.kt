@@ -2,6 +2,7 @@ package com.example.phishguard.presentation.home
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -87,8 +88,11 @@ private fun getHistoryStyle(riskLevel: RiskLevel): HistoryStyle = when (riskLeve
 
 @Composable
 fun HomeScreen(
+    onThreatClick: (Long) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
+    var showDeleteAllDialog by remember { mutableStateOf(false) }
+
     val messageTestState by viewModel.messageTestState.collectAsState()
     val threatHistory by viewModel.threatHistory.collectAsState()
 
@@ -99,6 +103,30 @@ fun HomeScreen(
     val dangerCount = threatHistory.count { it.riskLevel == RiskLevel.DANGER }
     val safeCount = threatHistory.count { it.riskLevel == RiskLevel.SAFE }
 
+    //_ 전체 삭제 확인 다이얼로그
+    if (showDeleteAllDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteAllDialog = false },
+            title = { Text("전체 삭제") },
+            text = { Text("탐지 이력을 전부 삭제할까요?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteAllThreats()
+                        showDeleteAllDialog = false
+                    }
+                ) {
+                    Text("삭제", color = Color(0xFFE24B4A))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteAllDialog = false }) {
+                    Text("취소")
+                }
+            }
+        )
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -106,7 +134,12 @@ fun HomeScreen(
         contentPadding = PaddingValues(bottom = 24.dp)
     ) {
         item {
-            HeaderSection(totalCount, dangerCount, safeCount)
+            HeaderSection(
+                total = totalCount,
+                danger = dangerCount,
+                safe = safeCount,
+                onDeleteAll = { showDeleteAllDialog = true }  // 추가
+            )
         }
 
         item {
@@ -143,7 +176,11 @@ fun HomeScreen(
                 )
             }
             items(threatHistory) { threat ->
-                ThreatHistoryCard(threat)
+                ThreatHistoryCard(
+                    threat = threat,
+                    onClick = { onThreatClick(threat.id) },
+                    onDelete = { viewModel.deleteThreat(threat.id) }
+                )
                 Spacer(modifier = Modifier.height(6.dp))
             }
         }
@@ -151,7 +188,12 @@ fun HomeScreen(
 }
 
 @Composable
-fun HeaderSection(total: Int, danger: Int, safe: Int) {
+fun HeaderSection(
+    total: Int,
+    danger: Int,
+    safe: Int,
+    onDeleteAll: () -> Unit  // 추가
+) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -159,56 +201,59 @@ fun HeaderSection(total: Int, danger: Int, safe: Int) {
             .padding(16.dp)
     ) {
         Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    modifier = Modifier
-                        .size(32.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("🛡", fontSize = 16.sp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Color.White.copy(alpha = 0.2f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("🛡", fontSize = 16.sp)
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Column {
+                        Text(
+                            text = "PhishGuard",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "AI 기반 피싱 문자 탐지",
+                            fontSize = 12.sp,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                    }
                 }
-                Spacer(modifier = Modifier.width(8.dp))
-                Column {
-                    Text(
-                        text = stringResource(R.string.app_name),
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White
-                    )
-                    Text(
-                        text = stringResource(R.string.app_subtitle),
-                        fontSize = 12.sp,
-                        color = Color.White.copy(alpha = 0.7f)
-                    )
+
+                //_ 전체 삭제 버튼
+                if (total > 0) {
+                    TextButton(onClick = onDeleteAll) {
+                        Text(
+                            text = "전체 삭제",
+                            fontSize = 12.sp,
+                            color = Color.White.copy(alpha = 0.7f)
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            //_ 통계 카드 기존 코드 그대로
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                StatCard(
-                    modifier = Modifier.weight(1f),
-                    value = total.toString(),
-                    label = stringResource(R.string.stat_total),
-                    valueColor = Color.White
-                )
-                StatCard(
-                    modifier = Modifier.weight(1f),
-                    value = danger.toString(),
-                    label = stringResource(R.string.label_danger),
-                    valueColor = Color(0xFFFF6B6B)
-                )
-                StatCard(
-                    modifier = Modifier.weight(1f),
-                    value = safe.toString(),
-                    label = stringResource(R.string.label_safe),
-                    valueColor = Color(0xFF51CF66)
-                )
+                StatCard(Modifier.weight(1f), total.toString(), "전체", Color.White)
+                StatCard(Modifier.weight(1f), danger.toString(), "위험", Color(0xFFFF6B6B))
+                StatCard(Modifier.weight(1f), safe.toString(), "안전", Color(0xFF51CF66))
             }
         }
     }
@@ -412,62 +457,101 @@ fun ErrorSection(message: String) {
 }
 
 @Composable
-fun ThreatHistoryCard(threat: ThreatResult) {
-    val style = getHistoryStyle(threat.riskLevel)
+fun ThreatHistoryCard(
+    threat: ThreatResult,
+    onClick: () -> Unit,
+    onDelete: () -> Unit  // 추가
+) {
+    val dismissState = rememberSwipeToDismissBoxState(
+        confirmValueChange = { value ->
+            if (value == SwipeToDismissBoxValue.EndToStart) {
+                onDelete()
+                true
+            } else false
+        }
+    )
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .width(3.dp)
-                .height(56.dp)
-                .clip(RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp))
-                .background(style.barColor)
-        )
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
-                .background(Color.White)
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+    SwipeToDismissBox(
+        state = dismissState,
+        enableDismissFromStartToEnd = false,  //_ 오른쪽 → 왼쪽 스와이프만
+        backgroundContent = {
+            //_ 스와이프 시 빨간 배경 표시
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp)
+                    .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
+                    .background(Color(0xFFE24B4A)),
+                contentAlignment = Alignment.CenterEnd
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = threat.messageText,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFF2C2C2A),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "${formatSender(threat.sender)} · ${formatTime(threat.analyzedAt)}",
-                        fontSize = 11.sp,
-                        color = Color(0xFF888780)
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(style.badgeBg)
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                Text(
+                    text = "삭제",
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(end = 20.dp)
+                )
+            }
+        }
+    ) {
+        //_ 기존 카드 UI 그대로
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .clickable { onClick() }
+        ) {
+            val style = getHistoryStyle(threat.riskLevel)
+
+            Box(
+                modifier = Modifier
+                    .width(3.dp)
+                    .height(56.dp)
+                    .clip(RoundedCornerShape(topStart = 4.dp, bottomStart = 4.dp))
+                    .background(style.barColor)
+            )
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
+                    .background(Color.White)
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = style.badgeText,
-                        fontSize = 11.sp,
-                        color = style.badgeTextColor,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = threat.messageText,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFF2C2C2A),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "${formatSender(threat.sender)} · ${formatTime(threat.analyzedAt)}",
+                            fontSize = 11.sp,
+                            color = Color(0xFF888780)
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(style.badgeBg)
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = style.badgeText,
+                            fontSize = 11.sp,
+                            color = style.badgeTextColor,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
         }

@@ -20,6 +20,7 @@ data class ThreatEntity(
 
 //_ Entity → Domain 모델 변환
 fun ThreatEntity.toDomain(): ThreatResult = ThreatResult(
+    id = id,
     messageText = messageText,
     sender = sender,
     riskLevel = RiskLevel.valueOf(riskLevel),
@@ -39,3 +40,4 @@ fun ThreatResult.toEntity(): ThreatEntity = ThreatEntity(
     analyzedAt = analyzedAt,
     isGeminiAnalyzed = isGeminiAnalyzed
 )
+

@@ -1,6 +1,7 @@
 package com.example.phishguard.domain.model
 
 data class ThreatResult(
+    val id: Long = 0,
     val messageText: String, //_ 원본 문자 내용
     val sender: String, //_ 발신자 번호
     val riskLevel: RiskLevel, //_ 위험 등급

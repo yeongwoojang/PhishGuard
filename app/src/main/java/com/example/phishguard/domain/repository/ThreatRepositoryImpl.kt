@@ -42,34 +42,47 @@ class ThreatRepositoryImpl @Inject constructor(
 
         val finalScore = if (tfliteScore >= 0f) {
             Log.d(TAG, "TFLite: $tfliteScore / 규칙: $quickScore")
-            (tfliteScore * 0.2f) + (quickScore * 0.8f) //_ tfLite 모델 학습 데이터가 적기 때문에 우선은 하드코딩 분석 가중치를 높게 잡음.
+            (tfliteScore * 0.8f) + (quickScore * 0.2f) //_ tfLite 모델 학습 데이터가 적기 때문에 우선은 하드코딩 분석 가중치를 높게 잡음.
         } else {
             Log.d(TAG, "TFLite 실패 → 규칙 기반 폴백: $quickScore")
             quickScore
         }
         Log.d(TAG, "1차 판별 점수: $finalScore")
 
-        val result = if (finalScore in 0.31f..0.60f) {
+        val result = if (finalScore in 0.31f..0.85f) {
             Log.d(TAG, "→ 애매한 케이스 Gemini 호출")
             val geminiResult = geminiService.analyzeMessage(text, sender)
-            Log.d(TAG, "→ Gemini 결과: ${geminiResult.isPhishing} / ${geminiResult.reason}")
-            ThreatResult(
-                messageText = text,
-                sender = sender,
-                riskLevel = RiskLevel.from(geminiResult.confidence),
-                riskScore = geminiResult.confidence,
-                reason = geminiResult.reason,
-                analyzedAt = System.currentTimeMillis(),
-                isGeminiAnalyzed = true
-            )
+
+            if (geminiResult.reason.contains("오류")) {
+                Log.d("PhishGuard", "→ Gemini 실패 → TFLite 점수로 판정: $finalScore")
+                ThreatResult(
+                    messageText = text,
+                    sender = sender,
+                    riskLevel = RiskLevel.from(finalScore),
+                    riskScore = finalScore,
+                    reason = "AI 분석 서버 오류 (TFLite 기반 판정)",
+                    analyzedAt = System.currentTimeMillis(),
+                    isGeminiAnalyzed = false
+                )
+            } else {
+                ThreatResult(
+                    messageText = text,
+                    sender = sender,
+                    riskLevel = RiskLevel.from(geminiResult.confidence),
+                    riskScore = geminiResult.confidence,
+                    reason = geminiResult.reason,
+                    analyzedAt = System.currentTimeMillis(),
+                    isGeminiAnalyzed = true
+                )
+            }
         } else {
             Log.d(TAG, "→ Gemini 호출 없음 / ${RiskLevel.from(finalScore)}")
             ThreatResult(
                 messageText = text,
                 sender = sender,
-                riskLevel = RiskLevel.from(quickScore),
+                riskLevel = RiskLevel.from(finalScore),
                 riskScore = finalScore,
-                reason = quickAnalyzeReason(quickScore),
+                reason = quickAnalyzeReason(finalScore),
                 analyzedAt = System.currentTimeMillis(),
                 isGeminiAnalyzed = false
             )
@@ -137,8 +150,16 @@ class ThreatRepositoryImpl @Inject constructor(
     }
 
     private fun quickAnalyzeReason(score: Float): String = when {
-        score > 0.6f -> "위험 키워드 및 의심 URL이 다수 감지되었습니다."
+        score > 0.6f -> "위험 키워드 및 의심 URL이 감지되었습니다."
         score > 0.3f -> "일부 의심 패턴이 감지되었습니다."
         else -> "위험 요소가 감지되지 않았습니다."
+    }
+
+    override suspend fun deleteThreat(id: Long) {
+        threatDao.deleteById(id)
+    }
+
+    override suspend fun deleteAllThreats() {
+        threatDao.deleteAll()
     }
 }

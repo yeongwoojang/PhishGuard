@@ -14,6 +14,9 @@ interface ThreatDao {
     @Query("SELECT * FROM threats ORDER BY analyzedAt DESC")
     fun getAllThreats(): Flow<List<ThreatEntity>>
 
+    @Query("SELECT * FROM threats WHERE id = :id")
+    suspend fun getThreatById(id: Long): ThreatEntity?
+
     //_ 위험/주의만 조회
     @Query("""
     SELECT COUNT(*) FROM threats 
@@ -33,11 +36,11 @@ interface ThreatDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(threat: ThreatEntity)
 
+    //_ 단건 삭제
+    @Query("DELETE FROM threats WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
     //_ 전체 삭제
     @Query("DELETE FROM threats")
     suspend fun deleteAll()
-
-    //_ 오래된 기록 삭제 (30일 이전)
-    @Query("DELETE FROM threats WHERE analyzedAt < :timestamp")
-    suspend fun deleteOlderThan(timestamp: Long)
 }

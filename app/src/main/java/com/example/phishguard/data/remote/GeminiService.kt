@@ -26,10 +26,12 @@ class GeminiService @Inject constructor() {
             Log.d(TAG, "Gemini 원본 응답: $rawText")
             parseResponse(rawText)
         } catch (e: Exception) {
+            Log.e(TAG, "Gemini 실패: ${e.message}")
+            //_ API 실패 시 CAUTION으로 처리 — 실패했다고 안전으로 판정하면 위험
             GeminiAnalysisResult(
-                isPhishing = false,
-                confidence = 0f,
-                reason = "분석 실패: ${e.message}"
+                isPhishing = true,
+                confidence = 0.5f,  // 0f → 0.5f 로 변경
+                reason = "AI 분석 중 오류가 발생했습니다. 주의가 필요합니다."
             )
         }
     }

@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.phishguard.domain.model.ThreatResult
 import com.example.phishguard.domain.usecase.AnalyzeMessageUseCase
+import com.example.phishguard.domain.usecase.DeleteAllThreatsUseCase
+import com.example.phishguard.domain.usecase.DeleteThreatUseCase
 import com.example.phishguard.domain.usecase.GetThreatHistoryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +19,9 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val analyzeMessageUseCase: AnalyzeMessageUseCase,
-    private val getThreatHistoryUseCase: GetThreatHistoryUseCase
+    private val getThreatHistoryUseCase: GetThreatHistoryUseCase,
+    private val deleteThreatUseCase: DeleteThreatUseCase,
+    private val deleteAllThreatsUseCase: DeleteAllThreatsUseCase
 ) : ViewModel() {
 
     private val _messageTestState = MutableStateFlow<HomeUiState>(HomeUiState.Idle)
@@ -45,6 +49,20 @@ class HomeViewModel @Inject constructor(
             } catch (e: Exception) {
                 _messageTestState.value = HomeUiState.Error(e.message ?: "알 수 없는 오류")
             }
+        }
+    }
+
+    //_ 개별 삭제
+    fun deleteThreat(id: Long) {
+        viewModelScope.launch {
+            deleteThreatUseCase(id)
+        }
+    }
+
+    //_ 전체 삭제
+    fun deleteAllThreats() {
+        viewModelScope.launch {
+            deleteAllThreatsUseCase()
         }
     }
 }

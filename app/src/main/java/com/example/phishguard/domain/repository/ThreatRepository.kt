@@ -16,4 +16,7 @@ interface ThreatRepository {
 
     //_ 위험/주의 이력만 조회
     fun getDangerousThreats(): Flow<List<ThreatResult>>
+    suspend fun deleteThreat(id: Long)
+
+    suspend fun deleteAllThreats()
 }

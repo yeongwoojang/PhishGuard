@@ -40,7 +40,16 @@ class PhishGuardNotificationService : NotificationListenerService() {
         val text = extras.getString(Notification.EXTRA_TEXT) ?: ""
         val sender = extras.getString(Notification.EXTRA_TITLE) ?: sbn.packageName
 
-        if (!isMessageNotification(sbn.packageName, "", text)) return
+        //_ 빈 문자열이면 분석 스킵
+        if (text.isBlank()) {
+            Log.d("PhishGuard", "→ 빈 문자열 스킵")
+            return
+        }
+
+        if (!isMessageNotification(sbn.packageName, text)) {
+            Log.d("PhishGuard", "→ 문자 알림 아님, 스킵")
+            return
+        }
 
         //_ 중복 체크 — 같은 문자는 5초 안에 재분석 하지 않도록 함.
         val messageHash = (sender + text).hashCode()
@@ -78,7 +87,6 @@ class PhishGuardNotificationService : NotificationListenerService() {
 
     private fun isMessageNotification(
         packageName: String,
-        title: String,
         text: String
     ): Boolean {
         //_ 문자 앱 패키지명

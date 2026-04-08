@@ -109,4 +109,7 @@ dependencies {
 
     //_ Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+
+    //_ navigation
+    implementation(libs.androidx.navigation.compose)
 }

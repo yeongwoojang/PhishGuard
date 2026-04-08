@@ -22,6 +22,7 @@ import com.example.phishguard.core.constants.SystemConstants
 import com.example.phishguard.core.security.BiometricAuthManager
 import com.example.phishguard.presentation.auth.BiometricScreen
 import com.example.phishguard.presentation.home.HomeScreen
+import com.example.phishguard.presentation.navigation.PhishGuardNavHost
 import com.example.phishguard.presentation.permission.NotificationPermissionScreen
 import com.example.phishguard.ui.theme.PhishGuardTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -83,7 +84,7 @@ class MainActivity : FragmentActivity() {
                         )
                     }
 
-                    else -> HomeScreen()
+                    else -> PhishGuardNavHost()
                 }
             }
         }
