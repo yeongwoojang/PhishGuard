@@ -34,7 +34,7 @@ interface ThreatDao {
 
     //_ 저장
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(threat: ThreatEntity)
+    suspend fun insert(threat: ThreatEntity): Long
 
     //_ 단건 삭제
     @Query("DELETE FROM threats WHERE id = :id")

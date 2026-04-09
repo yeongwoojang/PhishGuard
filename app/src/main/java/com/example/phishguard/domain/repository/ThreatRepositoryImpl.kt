@@ -8,7 +8,6 @@ import com.example.phishguard.data.remote.GeminiService
 import com.example.phishguard.domain.model.RiskLevel
 import com.example.phishguard.domain.model.ThreatResult
 import com.example.phishguard.ml.PhishingDetector
-import com.google.mlkit.vision.text.internal.LoggingUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -95,13 +94,15 @@ class ThreatRepositoryImpl @Inject constructor(
         val oneMinuteAgo = System.currentTimeMillis() - 60_000
         val isDuplicate = threatDao.countRecentDuplicate(text, oneMinuteAgo) > 0
 
+        var finalResult = result
         if (!isDuplicate) {
-            threatDao.insert(result.toEntity())
+            val id = threatDao.insert(result.toEntity())
+            finalResult = result.copy(id = id)
             Log.d(TAG, "DB 저장 완료")
         } else {
             Log.d(TAG, "중복 문자 → DB 저장 스킵")
         }
-        return result
+        return finalResult
     }
 
     override fun getThreatHistory(): Flow<List<ThreatResult>> {
