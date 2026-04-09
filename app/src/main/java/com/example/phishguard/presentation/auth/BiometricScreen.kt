@@ -88,7 +88,7 @@ fun BiometricScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             Text(
-                text = "PhishGuard",
+                text = stringResource(R.string.app_name),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Medium,
                 color = PrimaryBlue

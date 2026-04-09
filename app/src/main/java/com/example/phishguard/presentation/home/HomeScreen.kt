@@ -1,5 +1,6 @@
 package com.example.phishguard.presentation.home
 
+import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.phishguard.R
 import com.example.phishguard.domain.model.RiskLevel
 import com.example.phishguard.domain.model.ThreatResult
+import com.google.mlkit.vision.text.internal.LoggingUtils
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -102,7 +104,6 @@ fun HomeScreen(
     val totalCount = threatHistory.size
     val dangerCount = threatHistory.count { it.riskLevel == RiskLevel.DANGER }
     val safeCount = threatHistory.count { it.riskLevel == RiskLevel.SAFE }
-
     //_ 전체 삭제 확인 다이얼로그
     if (showDeleteAllDialog) {
         AlertDialog(
@@ -157,13 +158,13 @@ fun HomeScreen(
             )
         }
 
-        item {
-            when (val state = messageTestState) {
-                is HomeUiState.Success -> AnalysisResultSection(state.result)
-                is HomeUiState.Error -> ErrorSection(state.message)
-                else -> {}
-            }
-        }
+//        item {
+//            when (val state = messageTestState) {
+//                is HomeUiState.Success -> AnalysisResultSection(state.result)
+//                is HomeUiState.Error -> ErrorSection(state.message)
+//                else -> {}
+//            }
+//        }
 
         if (threatHistory.isNotEmpty()) {
             item {
@@ -175,7 +176,10 @@ fun HomeScreen(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
-            items(threatHistory) { threat ->
+            items(
+                items = threatHistory,
+                key = { threat -> threat.id }
+            ) { threat ->
                 ThreatHistoryCard(
                     threat = threat,
                     onClick = { onThreatClick(threat.id) },
@@ -219,7 +223,7 @@ fun HeaderSection(
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "PhishGuard",
+                            text = stringResource(R.string.app_name),
                             fontSize = 18.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.White
@@ -460,7 +464,7 @@ fun ErrorSection(message: String) {
 fun ThreatHistoryCard(
     threat: ThreatResult,
     onClick: () -> Unit,
-    onDelete: () -> Unit  // 추가
+    onDelete: () -> Unit
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->

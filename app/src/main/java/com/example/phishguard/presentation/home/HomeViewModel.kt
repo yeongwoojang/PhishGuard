@@ -1,5 +1,6 @@
 package com.example.phishguard.presentation.home
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.phishguard.domain.model.ThreatResult
@@ -12,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -24,11 +26,16 @@ class HomeViewModel @Inject constructor(
     private val deleteAllThreatsUseCase: DeleteAllThreatsUseCase
 ) : ViewModel() {
 
+    private val TAG = "HomeViewModel"
     private val _messageTestState = MutableStateFlow<HomeUiState>(HomeUiState.Idle)
     val messageTestState: StateFlow<HomeUiState> = _messageTestState.asStateFlow()
 
     //_ Room DB에 있는 메세지 문석 이력 Flow
     val threatHistory = getThreatHistoryUseCase()
+        .onEach { historyList ->
+            // 데이터가 업데이트될 때마다 이 블록이 실행됩니다.
+            Log.d(TAG, "threatHistory 업데이트 됨 | 데이터 개수: ${historyList.size}")
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -54,6 +61,7 @@ class HomeViewModel @Inject constructor(
 
     //_ 개별 삭제
     fun deleteThreat(id: Long) {
+        Log.d(TAG, "deleteThreat() | id: $id")
         viewModelScope.launch {
             deleteThreatUseCase(id)
         }
@@ -61,6 +69,7 @@ class HomeViewModel @Inject constructor(
 
     //_ 전체 삭제
     fun deleteAllThreats() {
+        Log.d(TAG, "deleteThreat()")
         viewModelScope.launch {
             deleteAllThreatsUseCase()
         }

@@ -8,4 +8,5 @@ object SystemConstants {
     const val GOOGLE_ANDROID_MESSAGING_PACKAGE_NAME = "com.google.android.apps.messaging"
     const val KAKAOTALK_PACKAGE_NAME = "com.kakao.talk"
     const val NHN_ANDROID_SEARCH_PACKAGE_NAME = "com.nhn.android.search"
+    const val BACKGROUND_MESSAGE = "백그라운드에서 메시지가 작동 중입니다."
 }

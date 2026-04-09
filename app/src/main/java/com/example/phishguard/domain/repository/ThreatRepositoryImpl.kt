@@ -8,6 +8,7 @@ import com.example.phishguard.data.remote.GeminiService
 import com.example.phishguard.domain.model.RiskLevel
 import com.example.phishguard.domain.model.ThreatResult
 import com.example.phishguard.ml.PhishingDetector
+import com.google.mlkit.vision.text.internal.LoggingUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -54,7 +55,7 @@ class ThreatRepositoryImpl @Inject constructor(
             val geminiResult = geminiService.analyzeMessage(text, sender)
 
             if (geminiResult.reason.contains("오류")) {
-                Log.d("PhishGuard", "→ Gemini 실패 → TFLite 점수로 판정: $finalScore")
+                Log.d(TAG, "→ Gemini 실패 → TFLite 점수로 판정: $finalScore")
                 ThreatResult(
                     messageText = text,
                     sender = sender,
