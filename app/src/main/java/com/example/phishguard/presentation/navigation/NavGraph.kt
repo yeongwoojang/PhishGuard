@@ -1,6 +1,9 @@
 package com.example.phishguard.presentation.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -17,8 +20,10 @@ sealed class Screen(val route: String) {
 }
 
 @Composable
-fun PhishGuardNavHost() {
+fun PhishGuardNavHost(onNavControllerReady: (NavHostController) -> Unit = {}) {
     val navController = rememberNavController()
+
+    SideEffect { onNavControllerReady(navController) }
 
     NavHost(
         navController = navController,

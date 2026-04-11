@@ -91,17 +91,10 @@ class ThreatRepositoryImpl @Inject constructor(
         Log.d(TAG, "최종: ${result.riskLevel} (${result.riskScore})")
         Log.d(TAG, "===== 분석 완료 =====")
 
-        val oneMinuteAgo = System.currentTimeMillis() - 60_000
-        val isDuplicate = threatDao.countRecentDuplicate(text, oneMinuteAgo) > 0
+        val id = threatDao.insert(result.toEntity())
+        val finalResult = result.copy(id = id)
+        Log.d(TAG, "DB 저장 완료 | threatId: $id")
 
-        var finalResult = result
-        if (!isDuplicate) {
-            val id = threatDao.insert(result.toEntity())
-            finalResult = result.copy(id = id)
-            Log.d(TAG, "DB 저장 완료")
-        } else {
-            Log.d(TAG, "중복 문자 → DB 저장 스킵")
-        }
         return finalResult
     }
 

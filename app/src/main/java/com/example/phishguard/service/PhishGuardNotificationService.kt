@@ -140,11 +140,13 @@ class PhishGuardNotificationService : NotificationListenerService() {
         }
 
         val intent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP        }
+            putExtra(MainActivity.EXTRA_THREAT_ID, result.id)
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
 
         val pendingIntent: PendingIntent = PendingIntent.getActivity(
             this,
-            0,
+            result.id.toInt(),
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
